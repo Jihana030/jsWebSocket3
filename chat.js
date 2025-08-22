@@ -1,3 +1,6 @@
+// import {io} from "socket.io-client";
+// const {io} = require('socket.io-client');
+import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
 
@@ -5,7 +8,31 @@ const message = document.querySelector('.input-box');
 const sendBtn = document.querySelector('#btn-send');
 const content = document.querySelector('.content');
 
-sendBtn.addEventListener('click', () => {
+let participants = [];
+let disConnectUser = false;
+//참가자명단 상단에 표시
+const userList = document.querySelector('.user-name');
+const userRate = document.querySelector('.user-id');
+function displayList(name){
+    userList.textContent = name.join();
+    userRate.textContent = `${name.length}명`;
+}
+
+let userName;
+const chatThumb = document.querySelector('.user-thumb img')
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    userName = urlParams.get('username');
+    chatThumb.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userName}`;
+    socket.emit('join', (name) => {
+        console.log(name);
+        name = userName;
+        const time = new Date().toLocaleString();
+        messageForm(name, `${name}님이 입장하셨습니다.`, 'me', 'state', time);
+    });
+})
+
+sendBtn.addEventListener('click', (e) => {
     e.preventDefault();
     socket.emit('message', message.value);
     message.value = '';
@@ -20,13 +47,64 @@ message.addEventListener("keydown", (e)=>{
         }
     }
 });
+// socket.on('join', (name) => {
+//     const time = new Date().toLocaleString();
+//     messageForm(name, `${name}님이 입장하셨습니다.`, 'me', 'state', time)
+// })
 
-socket.on('message', function (msg) {
-    const item = document.createElement('li');
-    item.textContent = msg;
-    content.appendChild(item);
-    window.scrollTo(0, document.body.scrollHeight);
-})
+function messageForm(name, msg, side, state, time) {
+    time = new Date().toLocaleString();
+    name = 'test';
+
+    let user = `
+        <div class="user-thumb">
+            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${name}" alt="user">
+            <span class="user-name">${name}</span>
+        </div>
+    `;
+    let temp = `
+        <div class="user-message">
+            <div>
+                ${msg.replaceAll(/(\n|\r\n)/g, "<br>")}
+                <span>${time}</span>
+            </div>
+        </div>
+    `;
+    let temp2 = `
+        <div>
+            ${msg.replaceAll(/(\n|\r\n)/g, "<br>")}
+            <span>${time}</span>
+        </div>
+    `
+
+    if(content.children.length === 0){
+        const chatMe = document.createElement('div');
+        chatMe.className = 'chat-bubble left';
+        chatMe.innerHTML = user;
+        chatMe.innerHTML += temp;
+        content.appendChild(chatMe);
+    } else if(content.lastElementChild.classList.contains('left')){
+        const userMessage = content.lastElementChild.querySelector('.user-message');
+        const userThumb = content.lastElementChild.querySelector('.user-thumb');
+        if(name !== userThumb.querySelector('.user-name').innerText){
+            const chatMe = document.createElement('div')
+            chatMe.className = 'chat-bubble left';
+            chatMe.innerHTML += user;
+            chatMe.innerHTML += temp;
+            content.appendChild(chatMe);
+        } else {
+            userMessage.innerHTML += temp2;
+        }
+    } else {
+        const chatMe = document.createElement('div')
+        chatMe.className = 'chat-bubble left';
+        chatMe.innerHTML += user;
+        chatMe.innerHTML += temp;
+        content.appendChild(chatMe);
+    }
+
+    scrollToBottom(content)
+}
 
 //스크롤 아래 고정
 function scrollToBottom(content){
