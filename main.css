@@ -149,7 +149,7 @@ span.material-symbols-rounded {
                 div.user-message {
                     align-items: flex-end;
                     div {
-                        background: url("./images/grdbg6.jpg") no-repeat bottom right fixed;
+                        background: url("images/grdbg6.jpg") no-repeat bottom right fixed;
                         background-size: 100% 100vh;
                         border-radius: 1.42rem 0.14rem 0.14rem 1.42rem;
 

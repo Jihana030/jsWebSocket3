@@ -24,17 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     userName = urlParams.get('username');
     chatThumb.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userName}`;
-    socket.emit('join', (name) => {
-        console.log(name);
-        name = userName;
-        const time = new Date().toLocaleString();
-        messageForm(name, `${name}님이 입장하셨습니다.`, 'me', 'state', time);
-    });
+    socket.emit('chat message', '[system]', `${userName}님이 입장하셨습니다.`, 'me', 'state');
 })
 
 sendBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    socket.emit('message', message.value);
+    socket.emit('chat message', userName, message.value, 'me', 'state');
     message.value = '';
     message.style.height = 'auto';
 })
@@ -47,15 +42,14 @@ message.addEventListener("keydown", (e)=>{
         }
     }
 });
-// socket.on('join', (name) => {
-//     const time = new Date().toLocaleString();
-//     messageForm(name, `${name}님이 입장하셨습니다.`, 'me', 'state', time)
-// })
 
-function messageForm(name, msg, side, state, time) {
-    time = new Date().toLocaleString();
-    name = 'test';
+// 메시지함수 정의
+socket.on('chat message', (userName, msg, side, state) => {
+    messageForm(userName, msg, side, state)
+})
 
+function messageForm(name, msg, side, state) {
+    const time = new Date().toLocaleString();
     let user = `
         <div class="user-thumb">
             <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${name}" alt="user">
@@ -77,30 +71,47 @@ function messageForm(name, msg, side, state, time) {
         </div>
     `
 
-    if(content.children.length === 0){
-        const chatMe = document.createElement('div');
-        chatMe.className = 'chat-bubble left';
-        chatMe.innerHTML = user;
-        chatMe.innerHTML += temp;
-        content.appendChild(chatMe);
-    } else if(content.lastElementChild.classList.contains('left')){
-        const userMessage = content.lastElementChild.querySelector('.user-message');
-        const userThumb = content.lastElementChild.querySelector('.user-thumb');
-        if(name !== userThumb.querySelector('.user-name').innerText){
+    if(side === 'me'){
+        if(content.children.length === 0){
+            const chatMe = document.createElement('div');
+            chatMe.className = 'chat-bubble right';
+            chatMe.innerHTML = temp;
+            content.appendChild(chatMe);
+        } else if(content.lastElementChild.classList.contains('right')){
+            const userMessage = content.lastElementChild.querySelector('.user-message');
+            userMessage.innerHTML += temp2;
+        } else {
+            const chatMe = document.createElement('div')
+            chatMe.className = 'chat-bubble right';
+            chatMe.innerHTML = temp;
+            content.appendChild(chatMe);
+        }
+    } else {
+        if(content.children.length === 0){
+            const chatMe = document.createElement('div');
+            chatMe.className = 'chat-bubble left';
+            chatMe.innerHTML = user;
+            chatMe.innerHTML += temp;
+            content.appendChild(chatMe);
+        } else if(content.lastElementChild.classList.contains('left')){
+            const userMessage = content.lastElementChild.querySelector('.user-message');
+            const userThumb = content.lastElementChild.querySelector('.user-thumb');
+            if(name !== userThumb.querySelector('.user-name').innerText){
+                const chatMe = document.createElement('div')
+                chatMe.className = 'chat-bubble left';
+                chatMe.innerHTML += user;
+                chatMe.innerHTML += temp;
+                content.appendChild(chatMe);
+            } else {
+                userMessage.innerHTML += temp2;
+            }
+        } else {
             const chatMe = document.createElement('div')
             chatMe.className = 'chat-bubble left';
             chatMe.innerHTML += user;
             chatMe.innerHTML += temp;
             content.appendChild(chatMe);
-        } else {
-            userMessage.innerHTML += temp2;
         }
-    } else {
-        const chatMe = document.createElement('div')
-        chatMe.className = 'chat-bubble left';
-        chatMe.innerHTML += user;
-        chatMe.innerHTML += temp;
-        content.appendChild(chatMe);
     }
 
     scrollToBottom(content)

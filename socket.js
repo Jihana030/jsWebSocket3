@@ -15,12 +15,8 @@ app.get('/', (req, res) => {
 })
 
 io.on('connection', (socket) => {
-    console.log('user connected');
-    socket.on('message', (msg)=>{
-        io.emit('message', msg);
-    })
-    socket.on('join', (name, msg, side, state, time)=>{
-        socket.name = name;
+    socket.on('chat message', (name, msg, side, state) => {
+        io.emit('chat message', name, msg, side, state);
     })
 })
 
