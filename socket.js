@@ -15,8 +15,10 @@ app.get('/', (req, res) => {
 })
 
 io.on('connection', (socket) => {
-    socket.on('chat message', (name, msg, side, state) => {
-        io.emit('chat message', name, msg, side, state);
+    socket.on('chat message', (username, msg, side, state) => {
+        io.emit('chat message', username, msg, side, state);
+        socket.name = username;
+        console.log(io.sockets.server.eio.clientsCount);
     })
 })
 
