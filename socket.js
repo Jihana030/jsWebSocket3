@@ -2,6 +2,7 @@ const express = require('express');
 const {createServer} = require('node:http');
 const {join} = require('node:path');
 const {Server} = require('socket.io');
+const {use} = require("express/lib/application");
 
 const app = express();
 const server = createServer(app);
@@ -15,10 +16,17 @@ app.get('/', (req, res) => {
 })
 
 io.on('connection', (socket) => {
+    let userList = [];
     socket.on('chat message', (username, msg, side, state) => {
-        io.emit('chat message', username, msg, side, state);
         socket.name = username;
-        console.log(io.sockets.server.eio.clientsCount);
+        // userList = io.sockets.server.eio.clientsCount;
+        userList.push(socket.name);
+        io.emit('chat message', username, msg, side, state, userList);
+    })
+    socket.on('disconnect',(username, msg, side, state) => {
+        socket.name = username;
+
+        io.emit('chat message', username, msg, side, state);
     })
 })
 

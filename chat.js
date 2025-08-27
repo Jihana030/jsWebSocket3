@@ -8,12 +8,13 @@ const message = document.querySelector('.input-box');
 const sendBtn = document.querySelector('#btn-send');
 const content = document.querySelector('.content');
 
-let participants = [];
+let participants;
 let disConnectUser = false;
 //참가자명단 상단에 표시
 const userList = document.querySelector('.user-name');
 const userRate = document.querySelector('.user-id');
 function displayList(name){
+    console.log(name)
     userList.textContent = name.join();
     userRate.textContent = `${name.length}명`;
 }
@@ -44,8 +45,10 @@ message.addEventListener("keydown", (e)=>{
 });
 
 // 메시지함수 정의
-socket.on('chat message', (userName, msg, side, state) => {
-    messageForm(userName, msg, side, state)
+socket.on('chat message', (userName, msg, side, state, userList) => {
+    participants = userList;
+    displayList(participants);
+    messageForm(userName, msg, side, state);
 })
 
 function messageForm(name, msg, side, state) {
