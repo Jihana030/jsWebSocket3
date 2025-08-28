@@ -69,6 +69,19 @@ socket.on('error', msg =>{
     window.location.href = 'index.html';
 })
 
+// textarea 높이
+message.addEventListener('input', e=>{
+    autoHeight(message);
+})
+function autoHeight(input){
+    input.style.height = 'auto';
+    if(input.scrollHeight > 173){
+        input.style.height = '174px';
+    } else {
+        input.style.height = `${input.scrollHeight}px`;
+    }
+}
+
 function messageForm(name, msg, side, state) {
     const time = new Date().toLocaleString();
     let user
