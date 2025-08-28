@@ -15,18 +15,36 @@ app.get('/', (req, res) => {
     res.sendFile(join(__dirname, 'index.html'));
 })
 
+let userList = [];
 io.on('connection', (socket) => {
-    let userList = [];
-    socket.on('chat message', (username, msg, side, state) => {
-        socket.name = username;
-        // userList = io.sockets.server.eio.clientsCount;
-        userList.push(socket.name);
-        io.emit('chat message', username, msg, side, state, userList);
-    })
-    socket.on('disconnect',(username, msg, side, state) => {
+    socket.on('join', (username, msg, side, state)=>{
         socket.name = username;
 
-        io.emit('chat message', username, msg, side, state);
+        //중복 체크
+        if(!userList.includes(username)){
+            userList.push(socket.name);
+            io.emit('join', username, msg, side, state, userList);
+        } else {
+            //중복의 경우
+            socket.isForcedDisconnect = true;
+            socket.emit('error', '유효하지 않은 닉네임입니다.');
+        }
+    })
+    socket.on('chat message', (username, msg, side, state) => {
+        socket.emit('chat message', username, msg, 'me', state);
+        socket.broadcast.emit('chat message', username, msg, 'other', state);
+    })
+
+    // 연결이 끊기면 자동 발생
+    socket.on('disconnect',() => {
+        if(socket.isForcedDisconnect){
+            return;
+        }
+        const disconnectUser = socket.name;
+        if(disconnectUser) {
+            userList = userList.filter(user=> user !== disconnectUser);
+            io.emit('disconnect message', disconnectUser, `${disconnectUser}님이 퇴장하셨습니다.`, 'side', 'state', userList);
+        }
     })
 })
 

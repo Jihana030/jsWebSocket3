@@ -1,5 +1,4 @@
-// import {io} from "socket.io-client";
-// const {io} = require('socket.io-client');
+
 import { io } from "https://cdn.socket.io/4.8.1/socket.io.esm.min.js";
 
 const socket = io();
@@ -9,7 +8,6 @@ const sendBtn = document.querySelector('#btn-send');
 const content = document.querySelector('.content');
 
 let participants;
-let disConnectUser = false;
 //참가자명단 상단에 표시
 const userList = document.querySelector('.user-name');
 const userRate = document.querySelector('.user-id');
@@ -20,17 +18,18 @@ function displayList(name){
 }
 
 let userName;
+let userNames;
 const chatThumb = document.querySelector('.user-thumb img')
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     userName = urlParams.get('username');
     chatThumb.src = `https://api.dicebear.com/9.x/thumbs/svg?seed=${userName}`;
-    socket.emit('chat message', '[system]', `${userName}님이 입장하셨습니다.`, 'me', 'state');
+    socket.emit('join', userName, `${userName}님이 입장하셨습니다.`, 'side', 'state', userNames);
 })
 
 sendBtn.addEventListener('click', (e) => {
     e.preventDefault();
-    socket.emit('chat message', userName, message.value, 'me', 'state');
+    socket.emit('chat message', userName, message.value, 'me', 'msg');
     message.value = '';
     message.style.height = 'auto';
 })
@@ -44,21 +43,46 @@ message.addEventListener("keydown", (e)=>{
     }
 });
 
-// 메시지함수 정의
-socket.on('chat message', (userName, msg, side, state, userList) => {
+// 유저 퇴장
+socket.on('disconnect message', (userName, msg, side, state, userList)=>{
     participants = userList;
     displayList(participants);
     messageForm(userName, msg, side, state);
 })
 
+// 메시지함수 정의
+socket.on('chat message', (userName, msg, side, state) => {
+    messageForm(userName, msg, side, state);
+})
+
+// join 함수 정의
+socket.on('join', (userName, msg, side, state, userList) =>{
+    participants = userList;
+    displayList(participants);
+    messageForm(userName, msg, side, state);
+})
+
+//error 함수 정의
+socket.on('error', msg =>{
+    alert(msg);
+    socket.disconnect();
+    window.location.href = 'index.html';
+})
+
 function messageForm(name, msg, side, state) {
     const time = new Date().toLocaleString();
-    let user = `
-        <div class="user-thumb">
-            <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${name}" alt="user">
-            <span class="user-name">${name}</span>
-        </div>
-    `;
+    let user
+    if(state === 'state'){
+        user = `<div class="user-thumb">
+                    <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=system" alt="user">
+                    <span class="user-name">[system]</span>
+                </div>`
+    } else  {
+        user = `<div class="user-thumb">
+                    <img src="https://api.dicebear.com/9.x/thumbs/svg?seed=${name}" alt="user">
+                    <span class="user-name">${name}</span>
+                </div>`
+    }
     let temp = `
         <div class="user-message">
             <div>
